@@ -1,1 +1,1 @@
-* Folder for css files
+* Folder for static files, includign .js and .css
