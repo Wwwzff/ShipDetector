@@ -1,0 +1,6 @@
+numpy
+scikit-image
+keras
+flask
+gevent
+werkzeug
