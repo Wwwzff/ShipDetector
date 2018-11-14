@@ -1,4 +1,5 @@
 numpy
+tensorflow
 scikit-image
 keras
 flask
