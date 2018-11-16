@@ -1,5 +1,5 @@
 # ShipDetector
-Website Application for Ship Detection
+Website Application for Ship Detection. Still have troubles when deploying it with heroku. Contact chesterw@bu.edu and look forward for constructive suggestions.
 
 ## How to run the program?
 
