@@ -27,8 +27,8 @@ from flask import Flask, redirect, url_for, request, render_template, make_respo
 from werkzeug.utils import secure_filename
 from gevent.pywsgi import WSGIServer
 
-#conn = Session(aws_access_key_id='AKIAIVIUVFSDEDYHAJLQ',aws_secret_access_key='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',region_name = 'us-east-2')
-session = boto3.Session(aws_access_key_id='AKIAIVIUVFSDEDYHAJLQ',aws_secret_access_key='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',region_name='us-east-2')
+#conn = Session(aws_access_key_id='',aws_secret_access_key='++',region_name = 'us-east-2')
+session = boto3.Session(aws_access_key_id='',aws_secret_access_key='++',region_name='us-east-2')
 print("Connected to S3 cloud services")
 bucket = 'shipdetection'
 s3 = session.resource('s3')
