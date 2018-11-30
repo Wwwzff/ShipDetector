@@ -2,12 +2,17 @@ from __future__ import division, print_function
 # coding=utf-8
 import sys
 import os
-import glob
-import re
 import numpy as np
+from io import BytesIO
+import base64
 
 # PIL
 from PIL import Image 
+
+#s3
+import boto3
+from boto3.session import Session
+from botocore.client import Config
 
 # Skimage
 from skimage.morphology import binary_opening, disk
@@ -22,6 +27,16 @@ from flask import Flask, redirect, url_for, request, render_template, make_respo
 from werkzeug.utils import secure_filename
 from gevent.pywsgi import WSGIServer
 
+#conn = Session(aws_access_key_id='AKIAIVIUVFSDEDYHAJLQ',aws_secret_access_key='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',region_name = 'us-east-2')
+session = boto3.Session(aws_access_key_id='AKIAIVIUVFSDEDYHAJLQ',aws_secret_access_key='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',region_name='us-east-2')
+print("Connected to S3 cloud services")
+bucket = 'shipdetection'
+s3 = session.resource('s3')
+bucket = s3.Bucket('shipdetection')
+for obj in bucket.objects.all():
+    print(obj.key)
+
+
 #global result path
 file1_path = ""
 
@@ -30,6 +45,9 @@ app = Flask(__name__)
 
 # Model saved with Keras model.save()
 model_path = './models/fullres_model.h5'
+global img_stream
+
+
 
 model = load_model(model_path)
 print('Model loaded. Check http://localhost:5000/')
@@ -54,7 +72,7 @@ def index():
 
 @app.route('/predict', methods=['GET', 'POST'])
 def upload():
-    global file1_path
+    global img_stream,preds
     if request.method == 'POST':
         # Get the file from post request
         f = request.files['file']
@@ -63,33 +81,49 @@ def upload():
         basepath = os.path.dirname(__file__)
         file_path = os.path.join(
             basepath, 'uploads', secure_filename(f.filename))
-        f.save(file_path)
+        #f.save(file_path)
+        
+
 
         preds = predict(file_path,model_path)
 
 
-        file1_path = os.path.join(
-            basepath, 'results', secure_filename(f.filename))
+        #file1_path = os.path.join(basepath, 'results', secure_filename(f.filename))
         
-        # Process your result for human
-        # pred_class = preds.argmax(axis=-1)            # Simple argmax
-        imsave(file1_path,img_as_uint(preds[:,:,0]))
+        img_stream = img_as_uint(preds[:,:,0])
+        #print(type(img_stream))
+        #imsave(file1_path,img_stream)
         #result = "Successed! "
-        #resultfilename =f.filename
-        return file1_path
-    
-    if request.method =='GET':
-        if file1_path is None:
-            pass
-        else:
-            image_data = open(file1_path, "rb").read()
-            response = make_response(image_data)
-            response.headers['Content-Type'] = 'image/jpg'
-            return response
-
+        img_stream = base64.b64encode(img_as_uint(preds[:,:,0]))
+        try:
+            response = s3.Bucket(bucket).put_object(Key='upload/', Body=img_stream,ContentType='.jpg')
+            print("succeed")
+        except Exception as e:
+            print(e)
+        return img_stream
     return None
 
+@app.route('/result', methods=['GET'])
+def showresult():
+    img_stream2 = base64.b64decode(img_stream)
+    #print("##########",type(img_stream2))
+    #print(type(img_stream))
+    #image.save(file1_path)
+    response = make_response(img_stream2)
+    response.headers['Content-Type'] = 'image/jpg'
+    return response
+
+
+
+
+
 ############################################################################
+
+
+
+
+
+
 
 @app.route('/favicon.ico',methods =['GET'])
 def ico():
@@ -100,12 +134,21 @@ def ico():
     return response
 
 
+@app.route('/header.jpg',methods =['GET'])
+def header():
+    header_path = './header.jpg'
+    header_data = open(header_path,'rb').read()
+    print(type(header_data))
+    response = make_response(header_data)
+    response.headers['Content-Type'] = 'image/jpg'
+    return response
+
+
 
 
 if __name__ == '__main__':
     # app.run(port=5002, debug=True)
-    port = int(os.environ.get('PORT', 5000))
-    #app.run(host='0.0.0.0', port=port)
+
     # Serve the app with gevent
-    http_server = WSGIServer(('0.0.0.0', port), app)
+    http_server = WSGIServer(('0.0.0.0', 5000), app)
     http_server.serve_forever()
