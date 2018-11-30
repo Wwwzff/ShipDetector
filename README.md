@@ -1,5 +1,6 @@
 # ShipDetector
 Website Application for Ship Detection. Still have troubles when deploying it with heroku. Contact chesterw@bu.edu and look forward for constructive suggestions.
+* Still trying to use AWS S3 for uploading and downloading stuffs
 
 ## How to run the program?
 
