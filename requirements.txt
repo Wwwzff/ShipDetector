@@ -6,3 +6,4 @@ flask
 gevent
 werkzeug
 h5py
+boto3
