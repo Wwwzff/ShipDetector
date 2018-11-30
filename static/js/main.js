@@ -30,6 +30,11 @@ $(document).ready(function () {
 
     $('#btn-result').click(function () {
         $('.image2-section').show();
+        $('#btn-predict').hide();
+        $('#btn-result').hide();
+        $('#resultPreview').css('background-image', 'url(/result)');
+        $('#resultPreview').hide();
+        $('#resultPreview').fadeIn(650);
     });
     // Predict
     $('#btn-predict').click(function () {
@@ -52,13 +57,11 @@ $(document).ready(function () {
                 // Get and display the result
                 $('.loader').hide();
                 $('#result').fadeIn(600);
-                $('#result').text(data);
+                $('#result').text('Successed! ');
                 //$('.image2-section').show();
                 $('#btn-result').show();
 
-                $('#resultPreview').css('background-image', 'url(./results/ship.jpg)');
-                $('#resultPreview').hide();
-                $('#resultPreview').fadeIn(650);
+                
                         
         
                 console.log('Success!');
