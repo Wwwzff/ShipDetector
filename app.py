@@ -3,7 +3,6 @@ from __future__ import division, print_function
 import sys
 import os
 import numpy as np
-import base64
 
 # PIL
 from PIL import Image 
