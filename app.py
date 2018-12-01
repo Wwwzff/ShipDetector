@@ -26,8 +26,8 @@ from gevent.pywsgi import WSGIServer
 app = Flask(__name__)
 
 # Model saved with Keras model.save()
-model_path = './models/fullres_model.h5'
-global img_stream
+model_path = './models/fullres_model_v3.h5'
+
 
 
 
