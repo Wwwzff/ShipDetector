@@ -3,16 +3,10 @@ from __future__ import division, print_function
 import sys
 import os
 import numpy as np
-from io import BytesIO
 import base64
 
 # PIL
 from PIL import Image 
-
-#s3
-import boto3
-from boto3.session import Session
-from botocore.client import Config
 
 # Skimage
 from skimage.morphology import binary_opening, disk
@@ -27,18 +21,7 @@ from flask import Flask, redirect, url_for, request, render_template, make_respo
 from werkzeug.utils import secure_filename
 from gevent.pywsgi import WSGIServer
 
-#conn = Session(aws_access_key_id='',aws_secret_access_key='++',region_name = 'us-east-2')
-session = boto3.Session(aws_access_key_id='',aws_secret_access_key='++',region_name='us-east-2')
-print("Connected to S3 cloud services")
-bucket = 'shipdetection'
-s3 = session.resource('s3')
-bucket = s3.Bucket('shipdetection')
-for obj in bucket.objects.all():
-    print(obj.key)
 
-
-#global result path
-file1_path = ""
 
 # Define a flask app
 app = Flask(__name__)
@@ -72,57 +55,34 @@ def index():
 
 @app.route('/predict', methods=['GET', 'POST'])
 def upload():
-    global img_stream,preds
+    global file1_path,img_stream
     if request.method == 'POST':
         # Get the file from post request
         f = request.files['file']
-
         # Save the file to ./uploads
         basepath = os.path.dirname(__file__)
         file_path = os.path.join(
             basepath, 'uploads', secure_filename(f.filename))
-        #f.save(file_path)
-        
-
-
+        f.save(file_path)
         preds = predict(file_path,model_path)
-
-
-        #file1_path = os.path.join(basepath, 'results', secure_filename(f.filename))
-        
+        file1_path = os.path.join(basepath, 'results', secure_filename(f.filename))    
         img_stream = img_as_uint(preds[:,:,0])
+        #io.imshow(img_stream)
         #print(type(img_stream))
-        #imsave(file1_path,img_stream)
+        imsave(file1_path,img_stream)
         #result = "Successed! "
-        img_stream = base64.b64encode(img_as_uint(preds[:,:,0]))
-        try:
-            response = s3.Bucket(bucket).put_object(Key='upload/', Body=img_stream,ContentType='.jpg')
-            print("succeed")
-        except Exception as e:
-            print(e)
-        return img_stream
-    return None
-
-@app.route('/result', methods=['GET'])
-def showresult():
-    img_stream2 = base64.b64decode(img_stream)
-    #print("##########",type(img_stream2))
-    #print(type(img_stream))
-    #image.save(file1_path)
-    response = make_response(img_stream2)
-    response.headers['Content-Type'] = 'image/jpg'
-    return response
-
-
+        #img_stream = base64.b64encode(img_as_uint(preds[:,:,0]))
+        return file1_path
+        
+    if request.method =='GET':
+        img_stream = open(file1_path,'rb').read()
+        response = make_response(img_stream)
+        response.headers['Content-Type'] = 'image/jpg'
+        return response
 
 
 
 ############################################################################
-
-
-
-
-
 
 
 @app.route('/favicon.ico',methods =['GET'])
@@ -150,5 +110,5 @@ if __name__ == '__main__':
     # app.run(port=5002, debug=True)
 
     # Serve the app with gevent
-    http_server = WSGIServer(('0.0.0.0', 5000), app)
+    http_server = WSGIServer(('', 5000), app)
     http_server.serve_forever()
