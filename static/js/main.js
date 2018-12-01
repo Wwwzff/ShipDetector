@@ -32,7 +32,7 @@ $(document).ready(function () {
         $('.image2-section').show();
         $('#btn-predict').hide();
         $('#btn-result').hide();
-        $('#resultPreview').css('background-image', 'url(/result)');
+        $('#resultPreview').css('background-image', 'url(/predict)');
         $('#resultPreview').hide();
         $('#resultPreview').fadeIn(650);
     });
