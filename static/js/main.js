@@ -14,6 +14,7 @@ $(document).ready(function () {
                 $('#imagePreview').css('background-image', 'url(' + e.target.result + ')');
                 $('#imagePreview').hide();
                 $('#imagePreview').fadeIn(650);
+                $('#resultPreview').css('background-image', 'none');
             }
             reader.readAsDataURL(input.files[0]);
         }
@@ -57,7 +58,7 @@ $(document).ready(function () {
                 // Get and display the result
                 $('.loader').hide();
                 $('#result').fadeIn(600);
-                $('#result').text('Successed! ');
+                $('#result').text('Succeed! ');
                 //$('.image2-section').show();
                 $('#btn-result').show();
 
