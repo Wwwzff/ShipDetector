@@ -3,6 +3,7 @@ from __future__ import division, print_function
 import sys
 import os
 import numpy as np
+#import base64
 
 # PIL
 from PIL import Image 
@@ -10,13 +11,13 @@ from PIL import Image
 # Skimage
 from skimage.morphology import binary_opening, disk
 from skimage.io import imsave
-from skimage import img_as_uint
+from skimage import img_as_uint,io
 
 # Keras
 from keras.models import load_model
 
 # Flask utils
-from flask import Flask, redirect, url_for, request, render_template, make_response
+from flask import Flask, redirect, url_for, request, render_template, make_response,send_file
 from werkzeug.utils import secure_filename
 from gevent.pywsgi import WSGIServer
 
@@ -27,7 +28,7 @@ app = Flask(__name__)
 
 # Model saved with Keras model.save()
 model_path = './models/fullres_model_v3.h5'
-
+global img_stream
 
 
 
@@ -54,9 +55,10 @@ def index():
 
 @app.route('/predict', methods=['GET', 'POST'])
 def upload():
-    global file1_path,img_stream
+    global file1_path
     if request.method == 'POST':
         # Get the file from post request
+        file1_path = ''
         f = request.files['file']
         # Save the file to ./uploads
         basepath = os.path.dirname(__file__)
@@ -74,6 +76,7 @@ def upload():
         return file1_path
         
     if request.method =='GET':
+
         img_stream = open(file1_path,'rb').read()
         response = make_response(img_stream)
         response.headers['Content-Type'] = 'image/jpg'
@@ -82,6 +85,13 @@ def upload():
 
 
 ############################################################################
+
+@app.route('/unet',methods = ['GET'])
+def unet():
+    return send_file('unet.html')
+
+
+
 
 
 @app.route('/favicon.ico',methods =['GET'])
@@ -110,5 +120,5 @@ if __name__ == '__main__':
 
     # Serve the app with gevent
     port = int(os.environ.get('PORT', 5000)) 
-    http_server = WSGIServer(('0.0.0.0',port), app)
+    http_server = WSGIServer(('0.0.0.0', port), app)
     http_server.serve_forever()
