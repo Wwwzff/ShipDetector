@@ -14,6 +14,7 @@ $(document).ready(function () {
                 $('#imagePreview').css('background-image', 'url(' + e.target.result + ')');
                 $('#imagePreview').hide();
                 $('#imagePreview').fadeIn(650);
+                //empty the result box or there won't be any GET requests for /predict part when doing mutiple predicts
                 $('#resultPreview').css('background-image', 'none');
             }
             reader.readAsDataURL(input.files[0]);
