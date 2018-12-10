@@ -12,6 +12,7 @@ from PIL import Image
 from skimage.morphology import binary_opening, disk
 from skimage.io import imsave
 from skimage import img_as_uint,io
+from skimage.measure import label, regionprops
 
 # Keras
 from keras.models import load_model
@@ -20,6 +21,9 @@ from keras.models import load_model
 from flask import Flask, redirect, url_for, request, render_template, make_response,send_file
 from werkzeug.utils import secure_filename
 from gevent.pywsgi import WSGIServer
+
+# OpenCV
+import cv2
 
 
 
@@ -67,10 +71,20 @@ def upload():
         f.save(file_path)
         preds = predict(file_path,model_path)
         file1_path = os.path.join(basepath, 'results', secure_filename(f.filename))    
-        img_stream = img_as_uint(preds[:,:,0])
+        img_mask = img_as_uint(preds[:,:,0])
+
+        #for bounding box
+        #img_0 = cv2.imread(file_path)
+        lable_mask = label(img_mask)
+        props = regionprops(lable_mask)
+        img_out = cv2.imread(file_path)
+
+        for prop in props:
+            cv2.rectangle(img_out,(prop.bbox[1], prop.bbox[0]), (prop.bbox[3], prop.bbox[2]), (77, 255, 9), 2)
+
         #io.imshow(img_stream)
         #print(type(img_stream))
-        imsave(file1_path,img_stream)
+        imsave(file1_path,img_out)
         #result = "Successed! "
         #img_stream = base64.b64encode(img_as_uint(preds[:,:,0]))
         return file1_path
@@ -107,7 +121,7 @@ def ico():
 def header():
     header_path = './header.jpg'
     header_data = open(header_path,'rb').read()
-    print(type(header_data))
+    #print(type(header_data))
     response = make_response(header_data)
     response.headers['Content-Type'] = 'image/jpg'
     return response
