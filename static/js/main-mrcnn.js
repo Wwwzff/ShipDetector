@@ -59,7 +59,7 @@ $(document).ready(function () {
                 // Get and display the result
                 $('.loader').hide();
                 $('#result').fadeIn(600);
-                $('#result').text('Succeed! ');
+                $('#result').text('Succeed in '+data+'s!');
                 //$('.image2-section').show();
                 $('#btn-result').show();
 
