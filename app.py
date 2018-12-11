@@ -3,7 +3,7 @@ from __future__ import division, print_function
 import sys
 import os
 import numpy as np
-#import base64
+from time import time
 
 # PIL
 from PIL import Image 
@@ -40,6 +40,7 @@ from mrcnn.model import log
 app = Flask(__name__)
 
 # Model saved with Keras model.save()
+resnet_path = './models/resnet.h5'
 mrcnn_path = './models/mrcnn.h5'
 model_path = './models/fullres_model_v4.h5'
 class AirbusShipDetectionChallengeGPUConfig(Config):
@@ -71,8 +72,7 @@ infer_model = modellib.MaskRCNN(mode="inference", model_dir='./models/', config=
 
 infer_model.load_weights(mrcnn_path, by_name=True)
 
-model = load_model(model_path)
-print('Model loaded. Check http://localhost:5000/')
+print('Models loaded. Check http://localhost:5000/')
 
 def predictraw(image_path,model_path):
     model = load_model(model_path)
@@ -95,9 +95,13 @@ def mainpage():
 def index():
     # Main page
     return render_template('index-mrcnn.html')
+@app.route('/resnetmain', methods=['GET'])
+def index_mrcnn():
+    # Main page
+    return render_template('index-resnet.html')
 
 @app.route('/unetmain', methods=['GET'])
-def index_mrcnn():
+def index_resnet():
     # Main page
     return render_template('index.html')
 
@@ -112,6 +116,8 @@ def upload():
         file_path = os.path.join(
             basepath, 'uploads', secure_filename(f.filename))
         f.save(file_path)
+
+        start = time()
         preds = predict(file_path,model_path)
         file1_path = os.path.join(basepath, 'results', secure_filename(f.filename))    
         img_mask = img_as_uint(preds[:,:,0])
@@ -124,7 +130,7 @@ def upload():
         for prop in props:
             cv2.rectangle(img_out,(prop.bbox[1], prop.bbox[0]), (prop.bbox[3], prop.bbox[2]), (77, 255, 9), 2)
         imsave(file1_path,img_out)
-        return file1_path
+        return str(time()-start)[:4]
         
     if request.method =='GET':
 
@@ -153,7 +159,7 @@ def upload_mrcnn():
         if len(image.shape) != 3 or image.shape[2] != 3:
             image = np.stack((image,) * 3, -1) 
 
-
+        start = time()
         results = infer_model.detect([image])
         r = results[0]
         for bbox in r['rois']: 
@@ -163,7 +169,39 @@ def upload_mrcnn():
             y2 = int(bbox[2]  * resize_factor)
             cv2.rectangle(image, (x1,y1), (x2,y2), (77, 255, 9), 3, 1)
         imsave(file1_path,image)
-        return file1_path
+        return str(time()-start)[:4]
+        
+    if request.method =='GET':
+
+        img_stream = open(file1_path,'rb').read()
+        response = make_response(img_stream)
+        response.headers['Content-Type'] = 'image/jpg'
+        return response
+
+@app.route('/predict-resnet', methods=['GET', 'POST'])
+def upload_resnet():
+    global file1_path
+    if request.method == 'POST':
+        file1_path = ''
+        f = request.files['file']
+        basepath = os.path.dirname(__file__)
+        file_path = os.path.join(
+            basepath, 'uploads', secure_filename(f.filename))
+        f.save(file_path)
+        start = time()
+        preds = predict(file_path,resnet_path)
+        file1_path = os.path.join(basepath, 'results-resnet', secure_filename(f.filename))    
+        img_mask = img_as_uint(preds[:,:,0])
+
+
+        lable_mask = label(img_mask)
+        props = regionprops(lable_mask)
+        img_out = cv2.imread(file_path)
+
+        for prop in props:
+            cv2.rectangle(img_out,(prop.bbox[1], prop.bbox[0]), (prop.bbox[3], prop.bbox[2]), (77, 255, 9), 2)
+        imsave(file1_path,img_out)
+        return str(time()-start)[:4]
         
     if request.method =='GET':
 
